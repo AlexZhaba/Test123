@@ -110,6 +110,8 @@ typings
 
 # dotenv environment variables file
 .env
+centrifugo
+centrifugo-config.json
 
 ### LOCAL ###
 static/
