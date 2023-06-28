@@ -27,6 +27,17 @@ services:
       - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]
     depends_on:
       - redis
+  celery-flower:
+    build: ./project
+    command: celery -A core flower --port=5001
+    volumes:
+      - ./project/:/usr/src/app/
+    depends_on:
+      - redis
+    expose:
+      - 5001
+    ports:
+      - '5001:5001'
   celery-beat:
     build: ./project
     command: celery -A core beat -l info
@@ -46,3 +57,15 @@ services:
     ports:
       - '1025:1025'
       - '8025:8025'
+
+  centrifugo:
+    image: centrifugo/centrifugo:v4
+    volumes:
+      - ./project/centrifugo-config.json:/centrifugo/config.json
+    command: centrifugo -c config.json
+    ports:
+      - 1580:8000
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535

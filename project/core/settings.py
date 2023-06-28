@@ -14,9 +14,15 @@ from pathlib import Path
 from celery.schedules import crontab
 import os
 
+import environ
+
+env = environ.Env()
+# reading .env file
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 
 # Quick-start development settings - unsuitable for production
@@ -29,8 +35,13 @@ SECRET_KEY = 'django-insecure-o9)p$_hpb1+um3p!f)(d5*h@+f_*w(6@hs2l&hv7-&t*gm6gf2
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '0.0.0.0'
+    '0.0.0.0',
+    'c398-2a02-6b8-b081-8014-00-1-2e.ngrok-free.app',
+    'localhost'
 ]
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'data/')  # 'data' is my media folder
+MEDIA_URL = '/media/'
 
 
 # Application definition
@@ -42,27 +53,57 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_celery_beat',
+    'oauth2_provider',
+    'corsheaders',
+    'social_django',
     'rest_framework',
-    'rest_framework_swagger',
+    'djoser',
+    'drf_yasg',
+    'shop'
 ]
+
+SOCIAL_AUTH_VK_OAUTH2_KEY = '51689068'
+SOCIAL_AUTH_VK_OAUTH2_SECRET = 'b5423To6vyrz2ZwQ3d4I'
+
+LOGIN_REDIRECT_URL = '/profile'
 
 REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,
     # or allow read-only access for unauthenticated users.
-    'DEFAULT_PERMISSION_CLASSES': [
+    'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        "rest_framework.authentication.SessionAuthentication"
     ],
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
 }
 
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.vk.VKOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173'
+]
+
+CORS_ALLOW_HEADERS = [
+    'x-csrftoken'
+]
+
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'social_django.middleware.SocialAuthExceptionMiddleware'
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -87,6 +128,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'core.wsgi.application'
+
+DJOSER = {
+    'SOCIAL_AUTH_ALLOWED_REDIRECT_URIS': ['http://0.0.0.0:1337/123/', 'http://0.0.0.0:1337/vk-login', 'http://localhost:1337/vk-login'],
+    'SEND_ACTIVATION_EMAIL': False,
+    'SEND_CONFIRMATION_EMAIL': False,
+    'TOKEN_MODEL': None,
+}
 
 
 # Database
@@ -145,3 +193,24 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CELERY_BROKER_URL = "redis://redis:6379"
 CELERY_RESULT_BACKEND = "redis://redis:6379"
+
+CELERY_BEAT_SCHEDULE = {
+    "send_email_report": {
+        "task": "shop.tasks.send_email_report",
+        "schedule": crontab(minute="*/1"),
+    },
+}
+
+EMAIL_HOST = 'smtp-server'  # Your Mailhog Host
+EMAIL_PORT = '1025'
+
+# EMAIL_HOST = 'smtp.mail.ru'
+# EMAIL_PORT = 465
+# EMAIL_USE_TLS = True
+# EMAIL_USE_SSL = False
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+DEFAULT_FROM_EMAIL = "noreply@email.com"
+ADMINS = [('sasazhava13@gmail.com', 'zhaba.univer@gmail.com')]
+
+# EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
